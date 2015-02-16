@@ -1,15 +1,21 @@
 package nosql.workshop.batch.mongodb;
 
+import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
+import com.mongodb.DBObject;
 
 import java.io.*;
+import java.util.Date;
+import java.util.HashMap;
 
 public class ActivitesImporter {
 
     private final DBCollection installationsCollection;
+    private HashMap<String, DBObject> installs ;
 
     public ActivitesImporter(DBCollection installationsCollection) {
         this.installationsCollection = installationsCollection;
+        installs = new HashMap<String, DBObject>();
     }
 
     public void run() {
@@ -34,7 +40,18 @@ public class ActivitesImporter {
         if (columns.length >= 6) {
             String equipementId = columns[2].trim();
 
-            // TODO codez la mise à jour de l'installation pour rattacher les activités à ses équipements
+            DBObject toEdit ;
+            BasicDBObject query = new BasicDBObject().append("equipements.numero", equipementId);
+            BasicDBObject update = new BasicDBObject();
+            update.append("$push",
+                    new BasicDBObject().append("equipements.$.activités", columns[5])
+            );
+            installationsCollection.update(query,update);
+
+
+//            if (toEdit != null) {
+//                toEdit.put("dateMiseAJourFiche", new Date());
+//            }
         }
     }
 }
