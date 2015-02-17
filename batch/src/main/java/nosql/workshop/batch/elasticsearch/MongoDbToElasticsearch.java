@@ -26,8 +26,8 @@ public class MongoDbToElasticsearch {
         MongoClient mongoClient = null;
 
         long startTime = System.currentTimeMillis();
-        Settings settings = ImmutableSettings.settingsBuilder().put("client.transport.sniff", true).build();
-        //Settings settings = ImmutableSettings.settingsBuilder().put("cluster.name", "elasticsearch").build();
+        //Settings settings = ImmutableSettings.settingsBuilder().put("client.transport.sniff", true).build();
+        Settings settings = ImmutableSettings.settingsBuilder().put("cluster.name", "elasticsearch").build();
         try (Client elasticSearchClient =
                      new TransportClient(settings).addTransportAddress(new InetSocketTransportAddress(ES_DEFAULT_HOST, ES_DEFAULT_PORT));) {
 
@@ -41,11 +41,11 @@ public class MongoDbToElasticsearch {
 
             while (cursor.hasNext()) {
                 DBObject object = cursor.next();
-                Integer objectId = (Integer)object.get("_id");
+                String objectId = (String)object.get("_id");
 
                 object.removeField("dateMiseAJourFiche");
 
-                bulkRequest.add(elasticSearchClient.prepareIndex("installations", "installation", String.valueOf(objectId)).setSource(object.toMap()));
+                bulkRequest.add(elasticSearchClient.prepareIndex("installations", "installation", objectId).setSource(object.toMap()));
 
             }
             BulkResponse bulkItemResponses = bulkRequest.execute().actionGet();

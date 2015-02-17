@@ -52,10 +52,10 @@ public class ImportTowns {
         Double[] coordinates = {longitude,latitude};
         try {
             bulkRequest.add(
-                    elasticSearchClient.prepareIndex("towns", "town", townName)
+                    elasticSearchClient.prepareIndex("towns", "town")
                             .setSource(jsonBuilder()
                                             .startObject()
-                                            .field("nom", townName)
+                                            .field("townName", townName)
                                             .field("location", coordinates)
                                             .endObject()
                             )

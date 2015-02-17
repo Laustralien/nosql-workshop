@@ -12,8 +12,11 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
+import org.elasticsearch.common.settings.ImmutableSettings;
+import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.index.query.FilterBuilders;
+import org.elasticsearch.index.query.MultiMatchQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 
@@ -41,7 +44,9 @@ public class SearchService {
 
     @Inject
     public SearchService(@Named(ES_HOST) String host, @Named(ES_TRANSPORT_PORT) int transportPort) {
-        elasticSearchClient = new TransportClient().addTransportAddress(new InetSocketTransportAddress(host, transportPort));
+        //Settings settings = ImmutableSettings.settingsBuilder().put("cluster.name", "elasticsearch").build();
+        Settings settings = ImmutableSettings.settingsBuilder().put("client.transport.sniff", true).build();
+        elasticSearchClient = new TransportClient(settings).addTransportAddress(new InetSocketTransportAddress(host, transportPort));
 
         objectMapper = new ObjectMapper();
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -53,25 +58,27 @@ public class SearchService {
      * @return la listes de installations
      */
     public List<Installation> search(String searchQuery) {
+
+        MultiMatchQueryBuilder query = QueryBuilders.multiMatchQuery("_all",searchQuery);
+
         SearchResponse resp = elasticSearchClient
                 .prepareSearch("installations")
                 .setTypes("installation")
                 .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
-                .setQuery(QueryBuilders.multiMatchQuery("_all",searchQuery))
+                .setQuery(query)
                 .execute()
                 .actionGet();
+
         Iterator<SearchHit> ite = resp.getHits().iterator();
         List<Installation> ret = new ArrayList<>();
 
         while (ite.hasNext()) {
-
             try {
                 Installation i = objectMapper.readValue(ite.next().toString(), Installation.class);
                 ret.add(i);
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
         }
         return ret;
     }
@@ -95,13 +102,14 @@ public class SearchService {
         SearchResponse response = elasticSearchClient.prepareSearch("towns")
                 .setTypes("town")
                 .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
-                .setQuery(QueryBuilders.wildcardQuery("nom", townName.toLowerCase() + "*"))
+                .setQuery(QueryBuilders.wildcardQuery("townName", townName.toLowerCase() + "*"))
                 .setExplain(true)
                 .execute()
                 .actionGet();
 
         List<TownSuggest> towns =  new ArrayList<>();
         SearchHit[] hits = response.getHits().getHits();
+
         for(int i = 0; i<hits.length; i++) {
             try {
                 towns.add(objectMapper.readValue(hits[i].getSourceAsString(), TownSuggest.class));
@@ -117,17 +125,13 @@ public class SearchService {
                 .setTypes("town")
                 .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
                 .addField("location")
-                .setQuery(QueryBuilders.matchQuery("nom", townName))
+                .setQuery(QueryBuilders.matchQuery("townName", townName))
                 .setExplain(true)
                 .execute()
                 .actionGet();
 
         SearchHit[] hits = response.getHits().getHits();
-        if(hits.length == 0){
-
-        }else {
-            System.out.println("ici");
-
+        if(hits.length != 0){
             List<Object> values = hits[0].field("location").values();
 
             Double[] ret = new Double[values.size()];
