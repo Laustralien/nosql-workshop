@@ -19,6 +19,7 @@ import org.elasticsearch.index.query.FilterBuilders;
 import org.elasticsearch.index.query.MultiMatchQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.suggest.completion.CompletionSuggestionBuilder;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -59,13 +60,16 @@ public class SearchService {
      */
     public List<Installation> search(String searchQuery) {
 
-        MultiMatchQueryBuilder query = QueryBuilders.multiMatchQuery("_all",searchQuery);
+        CompletionSuggestionBuilder compBuilder = new CompletionSuggestionBuilder("complete");
+        compBuilder.text(searchQuery);
+        compBuilder.field("suggest");
 
         SearchResponse resp = elasticSearchClient
                 .prepareSearch("installations")
                 .setTypes("installation")
                 .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
-                .setQuery(query)
+                .setQuery(QueryBuilders.matchAllQuery())
+                .addSuggestion(compBuilder)
                 .execute()
                 .actionGet();
 
