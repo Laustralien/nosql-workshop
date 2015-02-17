@@ -84,7 +84,13 @@ public class InstallationService {
      * @return l'installation avec le plus d'équipements.
      */
     public Installation installationWithMaxEquipments() {
-        return  installations.aggregate("{ $group: { _id:'$_id', countEq:{$sum:1}}},{$sort:{'countEq':-1}},{$limit:1}").as(Installation.class).iterator().next();
+        Installation ins = installations.aggregate("{$unwind : '$equipements'}")
+                .and("{$group : {_id : '$_id', total : {$sum:1} }}")
+                .and("{$sort : {total : -1}}")
+                .and("{$limit : 1}")
+                .as(Installation.class).iterator().next();
+
+        return this.get(ins.getNumero());
     }
 
     /**
@@ -93,31 +99,21 @@ public class InstallationService {
      * @return le nombre d'installations par activité.
      */
     public List<CountByActivity> countByActivity() {
-
-        Iterator<Installation> all = installations.aggregate("{$unwind : '$equipements'}").and("{$unwind : '$activites'}").as(Installation.class).iterator();
+        Iterator<CountByActivity> all = installations.aggregate("{$unwind : '$equipements'}")
+                .and("{$unwind : '$equipements.activites'}")
+                .and("{$group: {_id:'$equipements.activites', total: {$sum:1} }}")
+                .and("{$project : {activite : '$_id' , total : '$total' } }")
+                .as(CountByActivity.class).iterator();
         List<CountByActivity> ret = new ArrayList<>();
-        Map<String, CountByActivity> map = new HashMap<>();
-
         while (all.hasNext()){
-            Installation ins = all.next();
-            if (map.containsKey(ins.getEquipements().get(0).getNom())){
-                CountByActivity ca = new CountByActivity();
-                ca.setActivite(ins.getEquipements().get(0).getNom());
-                ca.setTotal(1);
-                map.put(ins.getEquipements().get(0).getNom(),ca);
-            }else{
-                CountByActivity ca = map.get(ins.getEquipements().get(0).getNom());
-                ca.setTotal(ca.getTotal()+1);
-            }
+            ret.add(all.next());
         }
-        ret.addAll(map.values());
         return ret;
     }
 
     public double averageEquipmentsPerInstallation() {
         long ret = installations.aggregate("{$unwind : '$equipements' }").as(Object.class).size();
-        return ret / this.count();
-
+        return ((double)ret) / ((double)this.count());
     }
 
     /**

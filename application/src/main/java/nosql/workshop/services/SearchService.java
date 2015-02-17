@@ -6,12 +6,18 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import nosql.workshop.model.Installation;
 import nosql.workshop.model.suggest.TownSuggest;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
+import org.elasticsearch.index.query.FilterBuilders;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -45,8 +51,28 @@ public class SearchService {
      * @return la listes de installations
      */
     public List<Installation> search(String searchQuery) {
-        // TODO codez le service
-        throw new UnsupportedOperationException();
+        SearchResponse resp = elasticSearchClient
+                .prepareSearch("installations")
+                .setTypes("installation")
+                .setSearchType(SearchType.QUERY_AND_FETCH)
+                .setQuery(QueryBuilders.matchQuery("name",searchQuery))
+                .setExplain(true)
+                .execute()
+                .actionGet();
+        Iterator<SearchHit> ite = resp.getHits().iterator();
+        List<Installation> ret = new ArrayList<>();
+
+        while (ite.hasNext()) {
+
+            try {
+                Installation i = objectMapper.readValue(ite.next().toString(), Installation.class);
+                ret.add(i);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        }
+        return ret;
     }
 
     /**
