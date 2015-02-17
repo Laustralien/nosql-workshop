@@ -6,6 +6,7 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import nosql.workshop.model.Installation;
 import nosql.workshop.model.suggest.TownSuggest;
+import org.apache.lucene.queryparser.flexible.standard.builders.FieldQueryNodeBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.client.Client;
@@ -54,9 +55,8 @@ public class SearchService {
         SearchResponse resp = elasticSearchClient
                 .prepareSearch("installations")
                 .setTypes("installation")
-                .setSearchType(SearchType.QUERY_AND_FETCH)
-                .setQuery(QueryBuilders.matchQuery("name",searchQuery))
-                .setExplain(true)
+                .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
+                .setQuery(QueryBuilders.multiMatchQuery("_all",searchQuery))
                 .execute()
                 .actionGet();
         Iterator<SearchHit> ite = resp.getHits().iterator();

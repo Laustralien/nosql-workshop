@@ -37,7 +37,7 @@ public class InstallationService {
      * @return l'installation correspondante, ou <code>null</code> si non trouvée.
      */
     public Installation get(String numero) {
-        return installations.findOne("{_id: # }",Integer.parseInt(numero)).as(Installation.class);
+        return installations.findOne("{_id: # }",numero).as(Installation.class);
     }
 
     /**
@@ -99,7 +99,8 @@ public class InstallationService {
      * @return le nombre d'installations par activité.
      */
     public List<CountByActivity> countByActivity() {
-        Iterator<CountByActivity> all = installations.aggregate("{$unwind : '$equipements'}")
+        Iterator<CountByActivity> all = installations
+                .aggregate("{$unwind : '$equipements'}")
                 .and("{$unwind : '$equipements.activites'}")
                 .and("{$group: {_id:'$equipements.activites', total: {$sum:1} }}")
                 .and("{$project : {activite : '$_id' , total : '$total' } }")
@@ -123,13 +124,23 @@ public class InstallationService {
      * @return les résultats correspondant à la requête.
      */
     public List<Installation> search(String searchQuery) {
-        Iterator<Installation> all = installations.find("{nom: #}", searchQuery).as(Installation.class).iterator();
+
+
+        BasicDBObject index = new BasicDBObject();
+            index.put("nom", "text");
+            index.put("adresse.commune", "text");
+
+        BasicDBObject weights = new BasicDBObject("nom", 3).append("adresse.commune", 10);
+        BasicDBObject options = new BasicDBObject("weights", weights).append("default_language", "french");
+
+        installations.getDBCollection().createIndex(index, options);
+
+        Iterator<Installation> all = installations.find("{$text: {$search: #, $language : 'french'}},{score: {$meta: 'textScore'}}", searchQuery).as(Installation.class).iterator();
         List<Installation> list = new ArrayList<>();
         while (all.hasNext()){
             list.add(all.next());
         }
         return list;
-
     }
 
     /**
@@ -141,7 +152,6 @@ public class InstallationService {
      * @return les installations dans la zone géographique demandée.
      */
     public List<Installation> geosearch(double lat, double lng, double distance) {
-
 
         DBObject index2d = BasicDBObjectBuilder.start("location", "2dsphere").get();
         installations.getDBCollection().createIndex(index2d);

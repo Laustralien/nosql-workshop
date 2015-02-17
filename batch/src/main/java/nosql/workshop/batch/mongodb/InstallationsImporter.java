@@ -38,7 +38,7 @@ public class InstallationsImporter {
         String[] columns = line.substring(1, line.length() - 1).split("\",\"");
 
         BasicDBObject dbObject = new BasicDBObject();
-        dbObject.put("_id", Integer.parseInt(columns[1]));
+        dbObject.put("_id", columns[1]);
         dbObject.put("nom", columns[0]);
 
         BasicDBObject adresseObject = new BasicDBObject();
@@ -51,16 +51,10 @@ public class InstallationsImporter {
 
         BasicDBObject locationObject = new BasicDBObject();
         locationObject.put("type", "Point");
-        Double[] coord = new Double[2];
-        try {
-            coord[0] = Double.parseDouble(columns[9]);
-            coord[1] = Double.parseDouble(columns[10]);
-        } catch (NumberFormatException e) {
-            e.printStackTrace();
-            coord[0] = 0.0;
-            coord[1] = 0.0;
-        }
-        locationObject.put("coordinates", coord);
+        double[] locations = new double[2];
+        locations[0] = Double.parseDouble(columns[9]);
+        locations[1] = Double.parseDouble(columns[10]);
+        locationObject.put("coordinates", locations);
         dbObject.put("location",locationObject);
 
 

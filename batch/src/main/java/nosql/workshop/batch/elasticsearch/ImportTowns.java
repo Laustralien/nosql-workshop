@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 
 import static nosql.workshop.batch.elasticsearch.util.ElasticSearchBatchUtils.*;
+import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
 /**
  * Job d'import des rues de towns_paysdeloire.csv vers ElasticSearch (/towns/town)
@@ -22,7 +23,7 @@ public class ImportTowns {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(ImportTowns.class.getResourceAsStream("/csv/towns_paysdeloire.csv")));
              Client elasticSearchClient = new TransportClient().addTransportAddress(new InetSocketTransportAddress(ES_DEFAULT_HOST, ES_DEFAULT_PORT));) {
 
-            checkIndexExists("towns", elasticSearchClient);
+            checkIndexExists("installations", elasticSearchClient);
 
             BulkRequestBuilder bulkRequest = elasticSearchClient.prepareBulk();
 
@@ -32,7 +33,7 @@ public class ImportTowns {
                     .forEach(line -> insertTown(line, bulkRequest, elasticSearchClient));
 
             BulkResponse bulkItemResponses = bulkRequest.execute().actionGet();
-
+            System.out.print("Town Ok");
             dealWithFailures(bulkItemResponses);
         }
 
@@ -47,6 +48,18 @@ public class ImportTowns {
         Double longitude = Double.valueOf(split[6]);
         Double latitude = Double.valueOf(split[7]);
 
-        // TODO ajoutez le code permettant d'insérer la ville
+        try {
+            bulkRequest.add(
+                    elasticSearchClient.prepareIndex("towns", "town", townName)
+                            .setSource(jsonBuilder()
+                                            .startObject()
+                                            .field("nom", longitude)
+                                            .field("nom", latitude)
+                                            .endObject()
+                            )
+            );
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

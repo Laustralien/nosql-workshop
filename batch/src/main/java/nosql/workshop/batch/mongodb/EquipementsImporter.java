@@ -38,7 +38,7 @@ public class EquipementsImporter {
 
         DBObject toEdit ;
         BasicDBObject query = new BasicDBObject();
-        query.put("_id", Integer.parseInt(columns[2]));
+        query.put("_id", columns[2]);
 
         if (!installs.containsKey(columns[2])) {
             toEdit = this.installationsCollection.findOne(query);
@@ -57,7 +57,6 @@ public class EquipementsImporter {
         DBObject listItem = new BasicDBObject("equipements", dbObject);
         DBObject updateQuery = new BasicDBObject("$push", listItem);
         installationsCollection.update( query, updateQuery );
-        //installationsCollection.save(toEdit);
 
     }
 }
