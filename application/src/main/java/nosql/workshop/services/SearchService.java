@@ -6,6 +6,7 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import nosql.workshop.model.Installation;
 import nosql.workshop.model.suggest.TownSuggest;
+import nosql.workshop.resources.TownRessource;
 import org.apache.lucene.queryparser.flexible.standard.builders.FieldQueryNodeBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchType;
@@ -90,12 +91,52 @@ public class SearchService {
     }
 
     public List<TownSuggest> suggestTownName(String townName){
-        // TODO codez le service
-        throw new UnsupportedOperationException();
+
+        SearchResponse response = elasticSearchClient.prepareSearch("towns")
+                .setTypes("town")
+                .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
+                .setQuery(QueryBuilders.wildcardQuery("nom", townName.toLowerCase() + "*"))
+                .setExplain(true)
+                .execute()
+                .actionGet();
+
+        List<TownSuggest> towns =  new ArrayList<>();
+        SearchHit[] hits = response.getHits().getHits();
+        for(int i = 0; i<hits.length; i++) {
+            try {
+                towns.add(objectMapper.readValue(hits[i].getSourceAsString(), TownSuggest.class));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return towns;
     }
 
-    public Double[] getTownLocation(String townName) {
-        // TODO codez le service
-        throw new UnsupportedOperationException();
+    public Double[] getTownLocation(String townName)  {
+        SearchResponse response = elasticSearchClient.prepareSearch("towns")
+                .setTypes("town")
+                .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
+                .addField("location")
+                .setQuery(QueryBuilders.matchQuery("nom", townName))
+                .setExplain(true)
+                .execute()
+                .actionGet();
+
+        SearchHit[] hits = response.getHits().getHits();
+        if(hits.length == 0){
+
+        }else {
+            System.out.println("ici");
+
+            List<Object> values = hits[0].field("location").values();
+
+            Double[] ret = new Double[values.size()];
+            for(int i =0; i<values.size();i++){
+                ret[i] = (Double) values.get(i);
+            }
+            return ret;
+
+        }
+        return new Double[2];
     }
 }
