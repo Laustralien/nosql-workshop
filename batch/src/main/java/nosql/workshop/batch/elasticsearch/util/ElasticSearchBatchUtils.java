@@ -55,8 +55,6 @@ public abstract class ElasticSearchBatchUtils {
      */
     public static void checkIndexExists(String indexToChek, Client elasticSearchClient){
 
-        System.out.println("INDEXES " + elasticSearchClient.admin().indices());
-
         boolean indexExists = elasticSearchClient
                 .admin()
                 .indices()

@@ -44,7 +44,7 @@ public class ActivitesImporter {
             BasicDBObject query = new BasicDBObject().append("equipements.numero", equipementId);
             BasicDBObject update = new BasicDBObject();
             update.append("$push",
-                    new BasicDBObject().append("equipements.$.activités", columns[5])
+                    new BasicDBObject().append("equipements.$.activites", columns[5])
             );
             installationsCollection.update(query,update);
 

@@ -9,7 +9,6 @@ import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.net.UnknownHostException;
 
 import static nosql.workshop.batch.elasticsearch.util.ElasticSearchBatchUtils.*;
@@ -28,8 +27,8 @@ public class MongoDbToElasticsearch {
         try (Client elasticSearchClient =
                      new TransportClient()
                              .addTransportAddress(new InetSocketTransportAddress(ES_DEFAULT_HOST, ES_DEFAULT_PORT));){
-
-            checkIndexExists("*", elasticSearchClient);
+            
+            checkIndexExists("installations", elasticSearchClient);
 
             mongoClient = new MongoClient();
 
