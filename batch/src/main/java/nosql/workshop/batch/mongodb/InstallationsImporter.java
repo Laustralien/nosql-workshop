@@ -80,14 +80,13 @@ public class InstallationsImporter {
             dbObject.put("nbPlacesParkingHandicapes", 0);
         }
 
-        SimpleDateFormat formatter = new SimpleDateFormat("yyy-MMM-dd");
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MMM-dd");
 
 
         try {
-            Date date = formatter.parse(columns[27]);
+            Date date = formatter.parse(columns[28]);
             dbObject.put("dateMiseAJourFiche", date);
-        } catch (ParseException e) {
-            e.printStackTrace();
+        } catch (ParseException | ArrayIndexOutOfBoundsException e) {
             dbObject.put("dateMiseAJourFiche", new Date());
         }
 

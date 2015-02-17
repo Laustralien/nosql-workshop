@@ -48,10 +48,6 @@ public class ActivitesImporter {
             );
             installationsCollection.update(query,update);
 
-
-//            if (toEdit != null) {
-//                toEdit.put("dateMiseAJourFiche", new Date());
-//            }
         }
     }
 }

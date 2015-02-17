@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
  */
 public abstract class ElasticSearchBatchUtils {
     public static final String ES_DEFAULT_HOST = "127.0.0.1";
-    public static final int ES_DEFAULT_PORT = 9200;
+    public static final int ES_DEFAULT_PORT = 9300;
 
     private ElasticSearchBatchUtils(){}
 
@@ -54,6 +54,8 @@ public abstract class ElasticSearchBatchUtils {
      * @param indexToChek
      */
     public static void checkIndexExists(String indexToChek, Client elasticSearchClient){
+
+        System.out.println("INDEXES " + elasticSearchClient.admin().indices());
 
         boolean indexExists = elasticSearchClient
                 .admin()
