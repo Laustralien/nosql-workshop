@@ -43,25 +43,31 @@ public class ImportTowns {
 
     private static void insertTown(String line, BulkRequestBuilder bulkRequest, Client elasticSearchClient) {
         line = ElasticSearchBatchUtils.handleComma(line);
-
         String[] split = line.split(",");
 
         String townName = split[1].replaceAll("\"", "");
+
+        // location
         Double longitude = Double.valueOf(split[6]);
         Double latitude = Double.valueOf(split[7]);
         Double[] coordinates = {longitude,latitude};
-        try {
-            bulkRequest.add(
-                    elasticSearchClient.prepareIndex("towns", "town")
-                            .setSource(jsonBuilder()
-                                            .startObject()
-                                            .field("townName", townName)
-                                            .field("location", coordinates)
-                                            .endObject()
-                            )
-            );
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+
+        // payload
+        Map<String, Object> payloadMap = new HashMap<>();
+        payloadMap.put("input", townName);
+        payloadMap.put("output", townName);
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("townName", townName);
+        payload.put("location", coordinates);
+        payloadMap.put("payload", payload);
+
+        // global object
+        Map<String, Object> map = new HashMap<String,Object>();
+        map.put("townName", townName);
+        map.put("location", coordinates);
+        map.put("payloader", payloadMap);
+
+        bulkRequest.add(elasticSearchClient.prepareIndex("towns", "town").setSource(map));
+
     }
 }

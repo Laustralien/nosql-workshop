@@ -77,6 +77,7 @@ public class InstallationResource {
     public List<Installation> search(Context context) {
         String searchQuery = context.query().get("query");
         return installationService.search(searchQuery);
+        //return searchService.search(searchQuery);
     }
 
     @Get("/geosearch")
