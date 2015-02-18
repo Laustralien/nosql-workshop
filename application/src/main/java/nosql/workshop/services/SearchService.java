@@ -13,9 +13,9 @@ import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.suggest.Suggest;
 import org.elasticsearch.search.suggest.completion.CompletionSuggestion;
 import org.elasticsearch.search.suggest.completion.CompletionSuggestionBuilder;
 
@@ -72,61 +72,57 @@ public class SearchService {
      */
     public List<Installation> search(String searchQuery) {
 
-        CompletionSuggestionBuilder compBuilder = new CompletionSuggestionBuilder("complete");
-        compBuilder.text(searchQuery);
-        compBuilder.field("nom");
 
-        SearchResponse resp = elasticSearchClient
-                .prepareSearch("installations")
+        SearchResponse response = elasticSearchClient.prepareSearch("installations")
                 .setTypes("installation")
                 .setSearchType(SearchType.QUERY_AND_FETCH)
-                .setQuery(QueryBuilders.matchAllQuery())
-                .addSuggestion(compBuilder)
+                .setQuery(QueryBuilders.boolQuery().must(QueryBuilders.queryString(searchQuery)))
+                .setExplain(true)
                 .execute()
                 .actionGet();
 
-        SearchHit[] installations = resp.getHits().getHits();
-        List<Installation> ret = new ArrayList<>();
-        for (SearchHit sh : installations){
-            Installation i = this.mapToInstallation(sh);
-            ret.add(i);
+        List<Installation> installations = new ArrayList<>();
+        SearchHit[] hits = response.getHits().getHits();
+        for (SearchHit sh : hits){
+            installations.add(mapToInstallation(sh));
         }
 
-        return ret;
+        return installations;
     }
 
     public List<TownSuggest> suggestTownName(String townName){
 
         CompletionSuggestionBuilder compBuilder = new CompletionSuggestionBuilder("towns");
         compBuilder.text(townName);
-        compBuilder.field("townName");
+        compBuilder.field("townNameSuggest");
 
-        SearchResponse response = elasticSearchClient.prepareSearch("towns")
-                .setTypes("completions")
+        SearchResponse searchResponse = elasticSearchClient.prepareSearch("towns")
+                .setTypes("completion")
                 .setQuery(QueryBuilders.matchAllQuery())
                 .addSuggestion(compBuilder)
-                .execute()
-                .actionGet();
+                .execute().actionGet();
 
-        CompletionSuggestion compSuggestion = response.getSuggest().getSuggestion("towns");
-        List<TownSuggest> suggestions=  new ArrayList<>();
-        System.out.println(compSuggestion.getName());
+        CompletionSuggestion compSuggestion = searchResponse.getSuggest().getSuggestion("towns");
+
+        List<TownSuggest> suggestions =  new ArrayList<>();
         List<CompletionSuggestion.Entry.Option> opts = compSuggestion.iterator().next().getOptions();
 
-        for(CompletionSuggestion.Entry.Option o : opts) {
+        for (CompletionSuggestion.Entry.Option opt : opts){
             try {
-                suggestions.add(objectMapper.readValue(o.getPayloadAsString(), TownSuggest.class));
+                suggestions.add(objectMapper.readValue(opt.getPayloadAsString(), TownSuggest.class));
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
+
         return suggestions;
     }
 
     public Double[] getTownLocation(String townName)  {
+
         SearchResponse response = elasticSearchClient.prepareSearch("towns")
                 .setTypes("town")
-                .setSearchType(SearchType.DFS_QUERY_THEN_FETCH)
+                .setSearchType(SearchType.QUERY_AND_FETCH)
                 .addField("location")
                 .setQuery(QueryBuilders.matchQuery("townName", townName))
                 .setExplain(true)
@@ -144,6 +140,6 @@ public class SearchService {
             return ret;
 
         }
-        return new Double[2];
+        return null;
     }
 }

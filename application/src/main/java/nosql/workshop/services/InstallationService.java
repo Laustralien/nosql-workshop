@@ -84,13 +84,12 @@ public class InstallationService {
      * @return l'installation avec le plus d'équipements.
      */
     public Installation installationWithMaxEquipments() {
-        Installation ins = installations.aggregate("{$unwind : '$equipements'}")
-                .and("{$group : {_id : '$_id', total : {$sum:1} }}")
+        Installation ins = installations.aggregate("{$project: {total : { $size: '$equipements'},nom: 1,equipements: 1}}")
                 .and("{$sort : {total : -1}}")
                 .and("{$limit : 1}")
                 .as(Installation.class).iterator().next();
+        return ins;
 
-        return this.get(ins.getNumero());
     }
 
     /**
@@ -104,6 +103,7 @@ public class InstallationService {
                 .and("{$unwind : '$equipements.activites'}")
                 .and("{$group: {_id:'$equipements.activites', total: {$sum:1} }}")
                 .and("{$project : {activite : '$_id' , total : '$total' } }")
+                .and("{$sort : { total : -1 } }")
                 .as(CountByActivity.class).iterator();
         List<CountByActivity> ret = new ArrayList<>();
         while (all.hasNext()){

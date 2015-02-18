@@ -23,6 +23,7 @@ public class ImportTowns {
 
     public static void main(String[] args) throws IOException {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(ImportTowns.class.getResourceAsStream("/csv/towns_paysdeloire.csv")));
+
              Client elasticSearchClient = new TransportClient().addTransportAddress(new InetSocketTransportAddress(ES_DEFAULT_HOST, ES_DEFAULT_PORT));) {
 
             checkIndexExists("towns", elasticSearchClient);
@@ -62,10 +63,10 @@ public class ImportTowns {
         payloadMap.put("payload", payload);
 
         // global object
-        Map<String, Object> map = new HashMap<String,Object>();
+        Map<String, Object> map = new HashMap<>();
         map.put("townName", townName);
         map.put("location", coordinates);
-        map.put("payloader", payloadMap);
+        map.put("townNameSuggest", payloadMap);
 
         bulkRequest.add(elasticSearchClient.prepareIndex("towns", "town").setSource(map));
 
