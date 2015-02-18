@@ -1,5 +1,16 @@
-# Workshop NoSQL
+##### Functions implemented :
+* Mongo services
+* ElasticSearch services
+* Suggestions in map
+* Error in town name corrected
+nb : index must be create and update before launching Application
 
+Julien BONNEFONT
+Thomas LEGENDRE
+
+---
+
+# Workshop NoSQL
 *Découverte de [MongoDB](http://www.mongodb.org/) et d'[Elasticsearch](http://www.elasticsearch.org/), par la pratique !*
 
 
